@@ -1,15 +1,24 @@
 import React, { useEffect } from 'react';
+import io from 'socket.io-client';
 import styled from 'styled-components';
 import LeftArrowIcon from './assets/left-arrow-icon.svg';
 import ListIcon from './assets/list-icon.svg';
 import SendIcon from './assets/send-icon.svg';
-import init, {return_ten_added} from 'js_rust/js_rust';
 import IChat from './components/IChat';
 import YouChat from './components/YouChat';
 import './App.css';
 
+const ChatRoomContainer = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  height: 400px;
+`
+
 const ChatRoomTopBar = styled.div`
-  position: fixed;
+  z-index: 1;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -19,8 +28,6 @@ const ChatRoomTopBar = styled.div`
   justify-content: space-between;
   padding: 12px;
   background-color: #f0f1f5;
-
-  position: relative;
 `
 
 const ChatRoomTitle = styled.div`
@@ -40,18 +47,23 @@ const ChatRoomContent = styled.div`
   display: flex;
   flex-direction: column;
   padding: 12px;
+  margin: 40px 0 48px;
+
+  overflow-y: scroll;
 `
 
 const ChatInputBox = styled.div`
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
 
   display: flex;
   flex-direction: row;
 
-  padding: 4px 12px;
+  padding: 8px 12px;
+  background-color: #ffffffa0;
+  backdrop-filter: blur(8px);
   gap: 8px;
 `
 
@@ -65,19 +77,32 @@ const ChatInputText = styled.input`
 `
 
 function App() {
-  let wasm_module = null;
-  useEffect(() => {
-    async function fn() {
-      if (!wasm_module) {
-        wasm_module = await init();
-        console.log(return_ten_added(10));
-      }
-    };
-    fn();
-  }, []);
+  const serverAddress = 'ws://floweryclover.starryflower.co.kr:31412';
+  const socket = io(serverAddress);
+
+
+  socket.emit('request-channel-join', {
+    code: '1234'
+  });
+  socket.emit('request-set-nickname', {
+    nickname: '234',
+  });
+  socket.emit('send-chat', {
+    code: '1234',
+    msg: '테스트용 채팅입니다',
+  });
+
+  socket.on('receive-chat', (data) => {
+    console.log('정상');
+    console.log(data.msg);
+  });
+  socket.on('error', (error) => {
+    console.log('error');
+    console.log(error);
+  });
   return (
     <div className="App">
-      <div class="chat-room">
+      <ChatRoomContainer>
         <ChatRoomTopBar>
           <img src={LeftArrowIcon} alt="left-arrow-icon" />
           <ChatRoomTitle>
@@ -89,6 +114,12 @@ function App() {
           <YouChat name="익명1" message="테스트용 채팅입니다" />
           <IChat message="테스트용 채팅입니다" />
           <YouChat name="익명23" message="테스트용 채팅입니다" />
+          <YouChat name="익명23" message="테스트용 채팅입니다" />
+          <YouChat name="익명23" message="테스트용 채팅입니다" />
+          <IChat message="테스트용 채팅입니다" />
+          <IChat message="테스트용 채팅입니다" />
+          <IChat message="테스트용 채팅입니다" />
+          <IChat message="테스트용 채팅입니다" />
           <IChat message="테스트용 채팅입니다" />
           <IChat message="테스트용 채팅입니다" />
           <IChat message="테스트용 채팅입니다" />
@@ -98,7 +129,7 @@ function App() {
           </ChatInputText>
           <img src={SendIcon} alt="send-icon" />
         </ChatInputBox>
-      </div>
+      </ChatRoomContainer>
     </div>
   );
 }
